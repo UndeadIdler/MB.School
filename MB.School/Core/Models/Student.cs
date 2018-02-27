@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -18,6 +19,7 @@ namespace MB.School.Core.Models
         [DisplayName("注册时间")]
         public DateTime EnrollmentDate { get; set; }
 
+        [DisplayName("登记信息")]
         public ICollection<Enrollment> Enrollments { get; set; }
     }
 }
