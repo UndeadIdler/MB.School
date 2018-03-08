@@ -1,4 +1,4 @@
-﻿@model IEnumerable<MB.School.Core.Models.Student>
+﻿@model MB.School.Common.PaginationList<Student>
 
 @{
     ViewData["Title"] = "学生信息";
@@ -8,21 +8,34 @@
 
 <p>
     <a asp-action="Create">添加</a>
+    <form asp-action="Index" method="get">
+        <div class="form-actions no-color">
+            <p>搜索：<input type="text" name="searchStudent" value="@ViewData["SearchStudent"]" />
+                <input type="submit" value="搜索姓名" class="btn btn-default"/>
+                <a asp-action="Index">显示全部</a>
+            </p>
+
+        </div>
+    </form>
 </p>
 <table class="table">
     <thead>
-        <tr>
-                <th>
-                    @Html.DisplayNameFor(model => model.RealName)
-                </th>
-                <th>
-                    @Html.DisplayNameFor(model => model.EnrollmentDate)
-                </th>
-            <th></th>
-        </tr>
+    <tr>
+        <th>
+            <a asp-action="Index" asp-route-currentStudent="@ViewData["SearchStudent"]" asp-route-sortOrder="@ViewData["Name_Sort_Param"]">               
+                姓名
+            </a>
+        </th>
+        <th>
+            <a asp-action="Index" asp-route-currentStudent="@ViewData["SearchStudent"]"  asp-route-sortOrder="@ViewData["Date_Sort_Param"]" >
+                注册时间
+            </a>
+        </th>
+        <th></th>
+    </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
+    @foreach (var item in Model) {
         <tr>
             <td>
                 @Html.DisplayFor(modelItem => item.RealName)
@@ -36,6 +49,12 @@
                 <a asp-action="Delete" asp-route-id="@item.StudentId">删除</a>
             </td>
         </tr>
-}
+    }
     </tbody>
 </table>
+@{
+    var prevDisabled = !Model.HasPrivious ? "disabled" : "";
+    var nextDisabled = !Model.HasNext ? "disabled" : "";
+}
+<a asp-action="Index" class="btn btn-default @prevDisabled" asp-route-currentStudent="@ViewData["SearchStudent"]" asp-route-sortOrder="@ViewData["CurrentSort"]" asp-route-page="@(Model.PageIndex-1)" asp-route-currentStudent="@ViewData["currentStudent"]">上一页</a>
+<a asp-action="Index" class="btn btn-default @nextDisabled" asp-route-currentStudent="@ViewData["SearchStudent"]" asp-route-sortOrder="@ViewData["CurrentSort"]" asp-route-page="@(Model.PageIndex+1)" asp-route-currentStudent="@ViewData["currentStudent"]">下一页</a>

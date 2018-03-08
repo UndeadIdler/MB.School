@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
+using MB.School.Common;
 using MB.School.Core.Models;
 using MB.School.EntityFramework;
 using Microsoft.AspNetCore.Mvc;
@@ -17,9 +19,62 @@ namespace MB.School.Controllers
         }
 
         // GET: Students
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string sortOrder,string searchStudent,int? page,string currentStudent)
         {
-            return View(await _context.Students.AsNoTracking().ToListAsync());
+            //姓名排序字段
+            ViewData["Name_Sort_Param"] = string.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            //日期排序字段
+            ViewData["Date_Sort_Param"] = sortOrder=="Date"? "date_desc" : "Date";
+            
+
+            
+            //当前排序的关键字
+            //当前过滤页的参数
+            //
+            if (searchStudent != null)
+            {
+                page = 1;
+            }
+            else
+            {
+                searchStudent = currentStudent;
+            }
+            //搜索的关键字
+            ViewData["SearchStudent"] = searchStudent;
+            ViewData["CurrentSort"] = sortOrder;
+            #region 搜索和排序          
+            var students = from student in _context.Students select student;
+            if (!string.IsNullOrEmpty(searchStudent))
+            {
+                students = students.Where(s => s.RealName.Contains(searchStudent));
+            }
+            switch (sortOrder)
+            {
+                case "name_desc":
+                    students = students.OrderByDescending(s => s.RealName);
+                    break;
+                case "Date":
+                    students = students.OrderBy(s => s.EnrollmentDate);
+                    break;
+                case "date_desc":
+                    students = students.OrderByDescending(s => s.EnrollmentDate);
+                    break;
+                    default:
+                    students = students.OrderBy(s => s.RealName);
+                    break;
+            }
+            
+
+            #endregion
+
+            int pageSize = 3;
+            
+
+//            var dtos = await _context.Students.AsNoTracking().ToListAsync();
+//            return View(dtos);
+            var entities = students.AsNoTracking();
+            var dtos = await PaginationList<Student>.CreatePaginationAsync(entities, page ?? 1, pageSize);
+            return View(dtos);;
         }
         
         // GET: Students/Details/5
@@ -51,14 +106,22 @@ namespace MB.School.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("StudentId,RealName,EnrollmentDate")] Student student)
+        public async Task<IActionResult> Create([Bind("RealName,EnrollmentDate")] Student student)
         {
-            if (ModelState.IsValid)
+            try
             {
-                _context.Add(student);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                if (ModelState.IsValid)
+                {
+                    _context.Add(student);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
             }
+            catch (DbUpdateException e)
+            {
+                ModelState.AddModelError("","请检查填写的数据是否正确。");
+            }
+            
             return View(student);
         }
 
